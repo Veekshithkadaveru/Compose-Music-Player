@@ -32,7 +32,7 @@ interface MusicController {
 
     fun skipToPreviousSong()
 
-    fun getCurrentSong(): Song
+    fun getCurrentSong(): Song?
 
     fun seekTo(position: Long)
 

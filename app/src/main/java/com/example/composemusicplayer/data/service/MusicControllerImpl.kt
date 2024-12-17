@@ -2,7 +2,10 @@ package com.example.composemusicplayer.data.service
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
@@ -75,42 +78,57 @@ class MusicControllerImpl(context: Context) : MusicController {
     }
 
     override fun addMediaItems(songs: List<Song>) {
-        TODO("Not yet implemented")
+
+        val mediaItems = songs.map {
+            MediaItem.Builder()
+                .setMediaId(it.songUrl)
+                .setUri(it.songUrl)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setSubtitle(it.subtitle)
+                        .setTitle(it.title)
+                        .setArtist(it.subtitle)
+                        .setArtworkUri(Uri.parse(it.imageUrl))
+                        .build()
+                ).build()
+        }
+        mediaController?.setMediaItems(mediaItems)
     }
 
     override fun play(mediaItemIndex: Int) {
-        TODO("Not yet implemented")
+        mediaController?.apply {
+            seekToDefaultPosition(mediaItemIndex)
+            playWhenReady = true
+            prepare()
+        }
     }
 
     override fun resume() {
-        TODO("Not yet implemented")
+        mediaController?.play()
     }
 
     override fun pause() {
-        TODO("Not yet implemented")
+        mediaController?.pause()
     }
 
-    override fun getCurrentPosition(): Long {
-        TODO("Not yet implemented")
-    }
+    override fun getCurrentPosition(): Long = mediaController?.currentPosition ?: 0L
 
     override fun destroy() {
-        TODO("Not yet implemented")
+        MediaController.releaseFuture(mediaControllerFuture)
+        mediaControllerCallback = null
     }
 
     override fun skipToNextSong() {
-        TODO("Not yet implemented")
+        mediaController?.seekToNext()
     }
 
     override fun skipToPreviousSong() {
-        TODO("Not yet implemented")
+        mediaController?.seekToPrevious()
     }
 
-    override fun getCurrentSong(): Song {
-        TODO("Not yet implemented")
-    }
+    override fun getCurrentSong(): Song? = mediaController?.currentMediaItem?.toSong()
 
     override fun seekTo(position: Long) {
-        TODO("Not yet implemented")
+        mediaController?.seekTo(position)
     }
 }

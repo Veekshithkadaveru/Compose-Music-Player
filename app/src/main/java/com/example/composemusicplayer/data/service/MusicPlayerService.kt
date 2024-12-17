@@ -1,4 +1,4 @@
-package com.example.composemusicplayer.data
+package com.example.composemusicplayer.data.service
 
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
