@@ -4,14 +4,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.composemusicplayer.data.repository.MusicRepository
+import com.example.composemusicplayer.domain.model.Song
 import com.example.composemusicplayer.domain.usecase.AddMediaItemsUseCase
 import com.example.composemusicplayer.domain.usecase.PauseSongUseCase
 import com.example.composemusicplayer.domain.usecase.PlaySongUseCase
 import com.example.composemusicplayer.domain.usecase.ResumeSongUseCase
 import com.example.composemusicplayer.domain.usecase.SkipToNextSongUseCase
 import com.example.composemusicplayer.domain.usecase.SkipToPreviousSongUseCase
+import com.example.composemusicplayer.utils.network.DataState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,27 +47,68 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun skipToPreviousSong() {
-        TODO("Not yet implemented")
+    private fun skipToPreviousSong() = skipToPreviousSongUseCase {
+        homeUiState = homeUiState.copy(selectedSong = it)
     }
 
-    private fun skipToNextSong() {
-        TODO("Not yet implemented")
+    private fun skipToNextSong() = skipToNextSongUseCase {
+        homeUiState = homeUiState.copy(selectedSong = it)
     }
 
-    private fun resumeSong() {
-        TODO("Not yet implemented")
-    }
+    private fun resumeSong() = resumeSongUseCase
 
     private fun playSong() {
-        TODO("Not yet implemented")
+        homeUiState.apply {
+            songs?.indexOf(selectedSong)?.let {
+                playSongUseCase(it)
+            }
+        }
     }
 
-    private fun pauseSong() {
-        TODO("Not yet implemented")
-    }
+    private fun pauseSong() = pauseSongUseCase
 
     private fun getSong() {
-        TODO("Not yet implemented")
+        homeUiState = homeUiState.copy(loading = true)
+
+        viewModelScope.launch {
+            musicRepository.loadMusic()
+                .catch {
+                    homeUiState = homeUiState.copy(
+                        loading = false,
+                        errorMessage = it.message
+                    )
+                }.collect {
+                    homeUiState = when (it) {
+                        is DataState.Error -> homeUiState.copy(
+                            loading = false,
+                            errorMessage = it.exception.message
+                        )
+
+                        DataState.Loading -> homeUiState.copy(
+                            loading = true, errorMessage = null
+                        )
+
+                        is DataState.Success -> {
+                            val mediaitemList = it.data?.let { song ->
+                                song.map {
+                                    Song(
+                                        imageUrl = it.data?.image!!,
+                                        songUrl = it.data?.url!!,
+                                        title = it.song!!,
+                                        subtitle = it.album!!,
+                                        mediaId = it.song!!
+                                    )
+                                }
+                            }
+                            addMediaItemsUseCase(mediaitemList!!)
+                            homeUiState.copy(
+                                loading = false,
+                                songs = mediaitemList
+                            )
+                        }
+
+                    }
+                }
+        }
     }
 }
