@@ -4,17 +4,24 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
@@ -24,14 +31,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.example.composemusicplayer.R
 import com.example.composemusicplayer.data.model.MusicControllerUiState
+import com.example.composemusicplayer.domain.model.Song
 import com.example.composemusicplayer.domain.other.PlayerState
 import com.example.composemusicplayer.ui.components.NetworkOff
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import com.example.composemusicplayer.domain.model.Song
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,9 +169,28 @@ fun Home(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
-fun MusicItem(song: Song, content: () -> Unit) {
-
+fun MusicItem(song: Song, onClick: () -> Unit = {}) {
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Card(modifier = Modifier.padding(10.dp), onClick = { onClick() }) {
+            GlideImage(
+                model = song.imageUrl,
+                contentDescription = "",
+                loading = placeholder(R.drawable.ic_launcher_background),
+                modifier = Modifier.size(150.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(5.dp))
+        Text(
+            text = song.title,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleMedium,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth(0.7f),
+            maxLines = 1
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
