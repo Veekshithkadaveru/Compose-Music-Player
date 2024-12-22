@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 @HiltViewModel
 class SharedViewModels @Inject constructor(val musicController: MusicController) : ViewModel() {
 
-    private var musicControllerUiState by mutableStateOf(MusicControllerUiState())
+    var musicControllerUiState by mutableStateOf(MusicControllerUiState())
 
     init {
         setMediaControllerCallBack()
