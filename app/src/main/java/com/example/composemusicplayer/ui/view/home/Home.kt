@@ -59,6 +59,7 @@ import com.example.composemusicplayer.data.model.MusicControllerUiState
 import com.example.composemusicplayer.domain.model.Song
 import com.example.composemusicplayer.domain.other.PlayerState
 import com.example.composemusicplayer.ui.components.NetworkOff
+import com.example.composemusicplayer.ui.view.home.component.VinylAnimation
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -291,7 +292,7 @@ fun PlayerView(
         musicControllerUiState.currentSong?.imageUrl.let {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 VinylAnimation(
-                    imageUrl = it,
+                    imageUrl = it!!,
                     isPlaySong = musicControllerUiState.playerState == PlayerState.PLAYING
                 )
             }
