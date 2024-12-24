@@ -5,9 +5,10 @@ import com.example.composemusicplayer.domain.model.Song
 
 fun MediaItem.toSong() =
     Song(
-        mediaId = mediaId,
-        title = mediaMetadata.title.toString(),
-        subtitle = mediaMetadata.subtitle.toString(),
-        songUrl = mediaId,
-        imageUrl = mediaMetadata.artworkUri.toString()
+        mediaId = mediaId ?: "Unknown Media ID",
+        title = mediaMetadata.title?.toString() ?: "Unknown Title",
+        subtitle = mediaMetadata.subtitle?.toString() ?: "Unknown Subtitle",
+        songUrl = mediaId ?: "Unknown URL",
+        imageUrl = mediaMetadata.artworkUri?.toString() ?: ""
     )
+

@@ -1,5 +1,6 @@
 package com.example.composemusicplayer.ui.view.home
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -72,10 +73,11 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             musicRepository.loadMusic()
-                .catch {
+                .catch { exception ->
+                    Log.e("HomeViewModel", "Error loading songs: ${exception.message}", exception)
                     homeUiState = homeUiState.copy(
                         loading = false,
-                        errorMessage = it.message
+                        errorMessage = exception.message
                     )
                 }.collect {
                     homeUiState = when (it) {
@@ -90,25 +92,26 @@ class HomeViewModel @Inject constructor(
 
                         is DataState.Success -> {
                             val mediaitemList = it.data?.let { song ->
-                                song.map {
+                                song.map { songItem ->
                                     Song(
-                                        imageUrl = it.data?.image!!,
-                                        songUrl = it.data?.url!!,
-                                        title = it.song!!,
-                                        subtitle = it.album!!,
-                                        mediaId = it.song!!
+                                        imageUrl = songItem.data?.image ?: "",
+                                        songUrl = songItem.data?.url ?: "",
+                                        title = songItem.song ?: "Unknown Song",
+                                        subtitle = songItem.album ?: "Unknown Album",
+                                        mediaId = songItem.song ?: "Unknown Media ID"
                                     )
                                 }
-                            }
-                            addMediaItemsUseCase(mediaitemList!!)
+                            } ?: emptyList()
+
+                            addMediaItemsUseCase(mediaitemList)
                             homeUiState.copy(
                                 loading = false,
                                 songs = mediaitemList
                             )
                         }
-
                     }
                 }
         }
     }
+
 }

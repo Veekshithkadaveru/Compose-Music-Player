@@ -219,86 +219,89 @@ fun PlayerView(
     musicControllerUiState: MusicControllerUiState,
     currentValue: SheetValue
 ) {
+    val currentSong = musicControllerUiState.currentSong
 
-    val animatedAlign by animateIntOffsetAsState(
-        targetValue = if (currentValue == SheetValue.PartiallyExpanded) {
-            IntOffset.Zero
-        } else {
-            IntOffset(0, 1600)
-        },
-        label = "offset"
-    )
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        GlideImage(
-            model = musicControllerUiState.currentSong?.imageUrl,
-            contentDescription = "",
-            loading = placeholder(R.drawable.ic_launcher_background),
-            modifier = Modifier.fillMaxSize(),
-            colorFilter = ColorFilter.tint(
-                color = Color.Black.copy(0.9f),
-                blendMode = BlendMode.SrcOver
-            ),
-            contentScale = ContentScale.Crop
+    if (currentSong != null) {
+        val animatedAlign by animateIntOffsetAsState(
+            targetValue = if (currentValue == SheetValue.PartiallyExpanded) {
+                IntOffset.Zero
+            } else {
+                IntOffset(0, 1600)
+            },
+            label = "offset"
         )
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            LinearProgressIndicator(
-                progress = musicControllerUiState.currentPosition.toFloat() / musicControllerUiState.totalDuration.toFloat(),
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            GlideImage(
+                model = currentSong.imageUrl,
+                contentDescription = "",
+                loading = placeholder(R.drawable.ic_launcher_background),
+                modifier = Modifier.fillMaxSize(),
+                colorFilter = ColorFilter.tint(
+                    color = Color.Black.copy(0.9f),
+                    blendMode = BlendMode.SrcOver
+                ),
+                contentScale = ContentScale.Crop
             )
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                ControlButton(icon = R.drawable.baseline_skip_previous_24, size = 50.dp, onClick = {
-                    onEvent.invoke(HomeEvent.SkipToPreviousSong)
-                })
-                Spacer(modifier = Modifier.width(20.dp))
-                Log.e("Screen State", "PlayerView: $$$$$ ${playerState?.name}")
+                LinearProgressIndicator(
+                    progress = musicControllerUiState.currentPosition.toFloat() / musicControllerUiState.totalDuration.toFloat(),
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color.White
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    ControlButton(icon = R.drawable.baseline_skip_previous_24, size = 50.dp, onClick = {
+                        onEvent.invoke(HomeEvent.SkipToPreviousSong)
+                    })
+                    Spacer(modifier = Modifier.width(20.dp))
 
-                ControlButton(
-                    icon = if (playerState == PlayerState.PLAYING)
-                        R.drawable.baseline_pause_circle_outline_24
-                    else
-                        R.drawable.baseline_play_circle_outline_24,
-                    size = 100.dp,
-                    onClick = {
-                        if (playerState == PlayerState.PLAYING) {
-                            onEvent(HomeEvent.PauseSong)
-                        } else {
-                            onEvent(HomeEvent.ResumeSong)
+                    ControlButton(
+                        icon = if (playerState == PlayerState.PLAYING)
+                            R.drawable.baseline_pause_circle_outline_24
+                        else
+                            R.drawable.baseline_play_circle_outline_24,
+                        size = 100.dp,
+                        onClick = {
+                            if (playerState == PlayerState.PLAYING) {
+                                onEvent(HomeEvent.PauseSong)
+                            } else {
+                                onEvent(HomeEvent.ResumeSong)
+                            }
                         }
-                    }
-                )
-                Spacer(modifier = Modifier.width(20.dp))
-                ControlButton(icon = R.drawable.baseline_skip_next_24, size = 50.dp, onClick = {
-                    onEvent.invoke(HomeEvent.SkipToNextSong)
-                })
-            }
-            Spacer(modifier = Modifier.height(5.dp))
+                    )
+                    Spacer(modifier = Modifier.width(20.dp))
 
-            Text(
-                text = "${musicControllerUiState.currentSong?.title}",
-                Modifier.basicMarquee()
+                    ControlButton(icon = R.drawable.baseline_skip_next_24, size = 50.dp, onClick = {
+                        onEvent.invoke(HomeEvent.SkipToNextSong)
+                    })
+                }
+                Spacer(modifier = Modifier.height(5.dp))
+                Text(
+                    text = currentSong.title,
+                    Modifier.basicMarquee()
+                )
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            VinylAnimation(
+                imageUrl = currentSong.imageUrl,
+                isPlaySong = musicControllerUiState.playerState == PlayerState.PLAYING
             )
-            Spacer(modifier = Modifier.height(20.dp))
         }
-
-        musicControllerUiState.currentSong?.imageUrl.let {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                VinylAnimation(
-                    imageUrl = it!!,
-                    isPlaySong = musicControllerUiState.playerState == PlayerState.PLAYING
-                )
-            }
-        }
+    } else {
+        // Show placeholder or error state when currentSong is null
+        Text("No song currently playing", color = Color.White)
     }
 }
+
+
 
 
 @Composable
