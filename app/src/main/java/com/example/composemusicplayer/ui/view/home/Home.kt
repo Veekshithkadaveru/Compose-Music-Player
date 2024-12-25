@@ -93,6 +93,7 @@ fun Home(
                 Box(
                     Modifier
                         .fillMaxSize()
+                        .padding(top = 40.dp)
                         .pointerInput(Unit) {
                             detectVerticalDragGestures { change, dragAmount ->
                                 Log.e("TAG", "Home: ------>>>> $dragAmount")
@@ -335,7 +336,7 @@ fun ControlButton(icon: Int, size: Dp, onClick: () -> Unit) {
         Icon(
             modifier = Modifier.size(size / 1.5f),
             painter = painterResource(id = icon),
-            contentDescription = null, tint = Color.White
+            contentDescription = null, tint = Color.LightGray
         )
     }
 }
