@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -66,42 +67,42 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(
-    modifier: Modifier = Modifier,
-    navController: NavHostController,
-    onEvent: (HomeEvent) -> Unit,
+    modifier: Modifier = Modifier, navController: NavHostController, onEvent: (HomeEvent) -> Unit,
     uiState: HomeUiState,
     playerState: PlayerState?,
     isConnected: StateFlow<Boolean>,
-    musicControllerUiState: MusicControllerUiState
+    musicControllerUiState: MusicControllerUiState,
 ) {
 
     val coroutineScope = rememberCoroutineScope()
-    val sheetSheet = rememberStandardBottomSheetState(
+    val sheetState = rememberStandardBottomSheetState(
         skipHiddenState = true,
-        initialValue = SheetValue.PartiallyExpanded
+        initialValue = SheetValue.PartiallyExpanded,
     )
-    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetSheet)
+    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = sheetState
+    )
 
     val isCon = isConnected.collectAsState().value
     Log.e("IsConnected", "Home: $isCon")
+    if (isCon)
 
-    if (isCon) {
         BottomSheetScaffold(
-            modifier = Modifier,
+            modifier = modifier,
             sheetContent = {
                 Box(
-                    modifier
+                    Modifier
                         .fillMaxSize()
                         .pointerInput(Unit) {
                             detectVerticalDragGestures { change, dragAmount ->
                                 Log.e("TAG", "Home: ------>>>> $dragAmount")
                                 if (dragAmount > 0) {
                                     coroutineScope.launch {
-                                        sheetSheet.partialExpand()
+                                        sheetState.partialExpand()
                                     }
                                 } else {
                                     coroutineScope.launch {
-                                        sheetSheet.expand()
+                                        sheetState.expand()
                                     }
                                 }
                             }
@@ -124,24 +125,27 @@ fun Home(
                                     playerState,
                                     uiState,
                                     musicControllerUiState,
-                                    sheetSheet.currentValue
+                                    sheetState.currentValue
                                 )
                             }
 
                             errorMessage != null -> {
-                                Box(modifier = Modifier.background(Color.Black)) {
+                                Box(modifier = Modifier.background(color = Color.Black)) {
 
                                 }
                             }
                         }
+
                     }
                 }
             },
-            sheetShape = RoundedCornerShape(20.dp),
+            sheetShape = RoundedCornerShape(20.dp),//Rounded corners
             sheetPeekHeight = 200.dp,
-            scaffoldState = bottomSheetScaffoldState
-        ) {
-            Box(modifier = Modifier.padding(top = 20.dp)) {
+            scaffoldState = bottomSheetScaffoldState,
+
+            ) {
+            Box(Modifier.padding(top = 100.dp)) {
+
                 with(uiState) {
                     when {
                         loading == true -> {
@@ -153,17 +157,19 @@ fun Home(
                             }
                         }
 
-                        loading == false -> {
+                        loading == false && errorMessage == null -> {
+
                             if (songs != null) {
                                 LazyVerticalGrid(
                                     columns = GridCells.Fixed(2),
-                                    modifier = Modifier.padding(it)
+                                    modifier = Modifier.padding(it),
                                 ) {
                                     items(count = songs.size) {
                                         MusicItem(song = songs[it]) {
                                             onEvent(HomeEvent.OnSongSelected(songs[it]))
                                             onEvent(HomeEvent.PlaySong)
                                         }
+
                                     }
                                 }
                             }
@@ -173,29 +179,134 @@ fun Home(
                             Box(
                                 modifier = Modifier
                                     .background(color = Color.Black)
-                                    .fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {}
+                                    .fillMaxSize(), contentAlignment = Alignment.Center
+                            ) {
+
+                            }
                         }
                     }
                 }
             }
         }
-    } else {
+    else
         NetworkOff()
-    }
+
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
+private fun PlayerView(
+    onEvent: (HomeEvent) -> Unit,
+    playerState: PlayerState?,
+    uiState: HomeUiState,
+    musicControllerUiState: MusicControllerUiState,
+    currentValue: SheetValue,
+) {
+    val progress = if (musicControllerUiState.totalDuration > 0) {
+        musicControllerUiState.currentPosition.toFloat() / musicControllerUiState.totalDuration.toFloat()
+    } else {
+        0f
+    }
+    val animatedAlign by animateIntOffsetAsState(
+        targetValue = if (currentValue == SheetValue.PartiallyExpanded) {
+            IntOffset.Zero
+        } else {
+            IntOffset(0, 1600)
+        },
+        label = "offset"
+    )
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+    ) {
+        GlideImage(
+            model = musicControllerUiState.currentSong?.imageUrl,
+            contentDescription = "",
+            loading = placeholder(
+                R.drawable.ic_launcher_background
+            ),
+            modifier = Modifier
+                .fillMaxSize(),
+            colorFilter = ColorFilter.tint(
+                color = Color.Black.copy(0.9f),
+                blendMode = BlendMode.SrcOver
+            ),
+            contentScale = ContentScale.Crop
+        )
+        Column(
+            Modifier
+                .fillMaxWidth(),
+
+            horizontalAlignment = Alignment.CenterHorizontally,
+
+            ) {
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.DarkGray,
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                ControlButton(icon = R.drawable.baseline_skip_previous_24, size = 50.dp, onClick = {
+                    onEvent.invoke(HomeEvent.SkipToPreviousSong)
+                })
+                Spacer(modifier = Modifier.width(20.dp))
+                Log.e("Screen State", "PlayerView: $$$$$ ${playerState?.name}")
+
+                ControlButton(icon = if (playerState == PlayerState.PLAYING) R.drawable.baseline_pause_circle_outline_24 else R.drawable.baseline_play_circle_outline_24,
+                    size = 100.dp,
+                    onClick = {
+
+                        if (playerState == PlayerState.PLAYING) {
+                            onEvent(HomeEvent.PauseSong)
+                        } else {
+                            onEvent(HomeEvent.ResumeSong)
+                        }
+                    })
+                Spacer(modifier = Modifier.width(20.dp))
+                ControlButton(icon = R.drawable.baseline_skip_next_24, size = 50.dp, onClick = {
+                    onEvent.invoke(HomeEvent.SkipToNextSong)
+                })
+            }
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Text(
+                "${musicControllerUiState.currentSong?.title}",
+                Modifier.basicMarquee(),
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+
+        }
+        musicControllerUiState.currentSong?.imageUrl?.let {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                VinylAnimation(
+                    imageUrl = it,
+                    isPlaySong = musicControllerUiState.playerState == PlayerState.PLAYING
+                )
+            }
+        }
+
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
+@Composable
 fun MusicItem(song: Song, onClick: () -> Unit = {}) {
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Card(modifier = Modifier.padding(10.dp), onClick = { onClick() }) {
             GlideImage(
-                model = song.imageUrl,
-                contentDescription = "",
-                loading = placeholder(R.drawable.ic_launcher_background),
-                modifier = Modifier.size(150.dp)
+                model = song.imageUrl, contentDescription = "", loading = placeholder(
+                    R.drawable.ic_launcher_background
+                ), modifier = Modifier
+                    .height(150.dp)
+                    .width(150.dp)
             )
         }
         Spacer(modifier = Modifier.height(5.dp))
@@ -204,104 +315,11 @@ fun MusicItem(song: Song, onClick: () -> Unit = {}) {
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleMedium,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.fillMaxWidth(0.7f),
+            modifier = Modifier.fillMaxWidth(fraction = 0.7f),
             maxLines = 1
         )
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
-@Composable
-fun PlayerView(
-    onEvent: (HomeEvent) -> Unit,
-    playerState: PlayerState?,
-    uiState: HomeUiState,
-    musicControllerUiState: MusicControllerUiState,
-    currentValue: SheetValue
-) {
-    val currentSong = musicControllerUiState.currentSong
-
-    if (currentSong != null) {
-        val animatedAlign by animateIntOffsetAsState(
-            targetValue = if (currentValue == SheetValue.PartiallyExpanded) {
-                IntOffset.Zero
-            } else {
-                IntOffset(0, 1600)
-            },
-            label = "offset"
-        )
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            GlideImage(
-                model = currentSong.imageUrl,
-                contentDescription = "",
-                loading = placeholder(R.drawable.ic_launcher_background),
-                modifier = Modifier.fillMaxSize(),
-                colorFilter = ColorFilter.tint(
-                    color = Color.Black.copy(0.9f),
-                    blendMode = BlendMode.SrcOver
-                ),
-                contentScale = ContentScale.Crop
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LinearProgressIndicator(
-                    progress = musicControllerUiState.currentPosition.toFloat() / musicControllerUiState.totalDuration.toFloat(),
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.White
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ControlButton(icon = R.drawable.baseline_skip_previous_24, size = 50.dp, onClick = {
-                        onEvent.invoke(HomeEvent.SkipToPreviousSong)
-                    })
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    ControlButton(
-                        icon = if (playerState == PlayerState.PLAYING)
-                            R.drawable.baseline_pause_circle_outline_24
-                        else
-                            R.drawable.baseline_play_circle_outline_24,
-                        size = 100.dp,
-                        onClick = {
-                            if (playerState == PlayerState.PLAYING) {
-                                onEvent(HomeEvent.PauseSong)
-                            } else {
-                                onEvent(HomeEvent.ResumeSong)
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    ControlButton(icon = R.drawable.baseline_skip_next_24, size = 50.dp, onClick = {
-                        onEvent.invoke(HomeEvent.SkipToNextSong)
-                    })
-                }
-                Spacer(modifier = Modifier.height(5.dp))
-                Text(
-                    text = currentSong.title,
-                    Modifier.basicMarquee()
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-
-            VinylAnimation(
-                imageUrl = currentSong.imageUrl,
-                isPlaySong = musicControllerUiState.playerState == PlayerState.PLAYING
-            )
-        }
-    } else {
-        // Show placeholder or error state when currentSong is null
-        Text("No song currently playing", color = Color.White)
-    }
-}
-
-
 
 
 @Composable
@@ -317,7 +335,7 @@ fun ControlButton(icon: Int, size: Dp, onClick: () -> Unit) {
         Icon(
             modifier = Modifier.size(size / 1.5f),
             painter = painterResource(id = icon),
-            contentDescription = null
+            contentDescription = null, tint = Color.White
         )
     }
 }
